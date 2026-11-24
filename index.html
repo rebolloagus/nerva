@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16110d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nerva">
+<title>Nerva · Encargos</title>
+<link rel="icon" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        nog: { 950:'#110d0a', 900:'#16110d', 800:'#1f1813', 700:'#2a211a', 600:'#3a2e24', 500:'#54443a' },
+        mad: { 200:'#F6D7B0', 300:'#F0BE85', 400:'#E3A260', 500:'#D08A45', 600:'#B5732F' },
+        oro: '#D9B66A',
+        ok:'#4ade80', warn:'#fbbf24', bad:'#f87171'
+      },
+      fontFamily: {
+        marca: ['Cinzel','Georgia','serif'],
+        mano:  ['"Amatic SC"','cursive']
+      }
+    }
+  }
+}
+</script>
+<style>
+  html, body { background:#16110d; color:#f3ece4; -webkit-tap-highlight-color:transparent; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; overscroll-behavior-y:none;
+         background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(208,138,69,.10), transparent 70%); background-attachment:fixed; }
+  input, select, textarea { font-size:16px; }
+  .safe-b { padding-bottom:calc(env(safe-area-inset-bottom, 0px)); }
+  .no-scrollbar::-webkit-scrollbar { display:none; }
+  .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+  .sheet { transition:transform .22s ease-out; }
+  .sheet.down { transform:translateY(100%); }
+  @keyframes pop { from{transform:scale(.96);opacity:0} to{transform:scale(1);opacity:1} }
+  .pop { animation:pop .14s ease-out; }
+  .tabular { font-variant-numeric:tabular-nums; }
+  .fld { width:100%; background:#2a211a; border:1px solid #3a2e24; border-radius:.75rem; padding:.62rem .75rem; color:#f3ece4; }
+  .fld::placeholder { color:#7d6d60; }
+  .fld:focus { outline:none; border-color:#D08A45; box-shadow:0 0 0 3px rgba(208,138,69,.15); }
+  input[type=date].fld { color-scheme:dark; min-height:2.75rem; }
+  .lbl { display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.07em; color:#a8998a; margin-bottom:.35rem; font-weight:700; }
+  .chip { padding:.38rem .7rem; border-radius:999px; font-size:.75rem; font-weight:700; border:1px solid #3a2e24; background:#1f1813; color:#d6c8b9; }
+  .chip.on { background:#D08A45; border-color:#D08A45; color:#16110d; }
+  .card { background:#1f1813; border:1px solid #3a2e24; border-radius:1rem; }
+  .marca { font-family:Cinzel, Georgia, serif; letter-spacing:.2em; }
+  @media (min-width:1024px){
+    #sheet { top:50%; left:50%; right:auto; bottom:auto; width:min(64rem, calc(100vw - 5rem)); max-height:88vh;
+             border-radius:1rem; border:1px solid #3a2e24; transform:translate(-50%,-50%);
+             transition:transform .18s ease-out, opacity .18s ease-out; }
+    #sheet.down { transform:translate(-50%,-48%) scale(.98); opacity:0; }
+    #sheet.chico { width:min(30rem, calc(100vw - 5rem)); }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="sticky top-0 z-30 bg-nog-900/95 backdrop-blur border-b border-nog-600">
+  <div class="px-4 pt-3 pb-2.5 flex items-center gap-3 max-w-7xl mx-auto">
+    <img src="emblema.png" alt="Nerva" class="shrink-0 w-11 h-11 rounded-full ring-1 ring-black/40 shadow-md shadow-black/40">
+    <div class="min-w-0 flex-1 lg:flex-none">
+      <h1 class="marca text-[17px] font-bold leading-none text-mad-200">NERVA</h1>
+      <p class="font-mano text-[17px] leading-none text-stone-400 mt-1">Más que madera...</p>
+    </div>
+    <nav class="hidden lg:flex items-center gap-1 flex-1 ml-8">
+      <button data-goto="encargos" class="tabbtn px-3.5 py-2 rounded-lg text-sm font-bold hover:bg-nog-700">Encargos</button>
+      <button data-goto="caja" class="tabbtn px-3.5 py-2 rounded-lg text-sm font-bold hover:bg-nog-700">Caja</button>
+      <button data-goto="productos" class="tabbtn px-3.5 py-2 rounded-lg text-sm font-bold hover:bg-nog-700">Productos</button>
+    </nav>
+    <button id="btnNuevoTop" class="hidden lg:flex items-center gap-1.5 h-10 px-4 rounded-lg bg-mad-500 text-nog-900 font-extrabold text-sm hover:bg-mad-400 active:scale-95 transition">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg><span id="btnNuevoTopTxt">Nuevo encargo</span>
+    </button>
+    <button id="btnSync" class="shrink-0 flex items-center gap-1.5 rounded-full border border-nog-600 px-2.5 py-1.5 text-[11px] text-stone-300 active:bg-nog-700">
+      <span id="syncDot" class="w-2 h-2 rounded-full bg-stone-500"></span><span id="syncTxt">Local</span>
+    </button>
+    <button id="btnAjustes" class="shrink-0 w-9 h-9 grid place-items-center rounded-full border border-nog-600 active:bg-nog-700" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.820l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.6.77 1 1.41 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="pb-44 lg:pb-12 max-w-7xl mx-auto">
+  <section data-tab="encargos" class="tabpane">
+    <div class="px-4 pt-3 grid grid-cols-3 gap-2 lg:max-w-2xl" id="resumenEnc"></div>
+    <div class="px-4 pt-3 lg:max-w-md">
+      <div class="relative">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" class="fld pl-9 py-2 text-sm" placeholder="Buscar cliente, pieza o número" autocomplete="off">
+      </div>
+    </div>
+    <div class="px-4 pt-3 flex gap-2 overflow-x-auto no-scrollbar" id="filtros"></div>
+    <div id="listaEnc" class="px-4 pt-3 grid grid-cols-1 gap-2.5 lg:grid-cols-2 xl:grid-cols-3 lg:items-start"></div>
+  </section>
+
+  <section data-tab="caja" class="tabpane hidden">
+    <div class="px-4 pt-3 flex flex-wrap items-center gap-2">
+      <select id="selMes" class="fld text-sm w-auto flex-1 min-w-[10rem] lg:flex-none lg:w-56"></select>
+      <div class="flex gap-2 w-full sm:w-auto">
+        <button data-nuevomov="entrada" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-ok/40 text-ok font-bold text-sm active:bg-ok/10 hover:bg-ok/10">+ Entrada</button>
+        <button data-nuevomov="salida" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-bad/40 text-bad font-bold text-sm active:bg-bad/10 hover:bg-bad/10">+ Gasto</button>
+      </div>
+    </div>
+    <div id="cajaBody" class="px-4 pt-3 space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:items-start"></div>
+  </section>
+
+  <section data-tab="productos" class="tabpane hidden">
+    <div class="px-4 pt-3 flex items-center justify-between gap-3">
+      <p class="text-[12px] text-stone-400 leading-snug">Tus piezas con su precio. Al tomar un encargo se agregan de un toque.</p>
+      <button id="btnNuevoProd" class="text-sm font-bold text-mad-400 active:opacity-70 shrink-0">+ Producto</button>
+    </div>
+    <div id="listaProd" class="px-4 pt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3"></div>
+  </section>
+</main>
+
+<button id="fab" class="lg:hidden fixed right-4 bottom-24 z-30 h-14 px-5 rounded-full bg-mad-500 text-nog-900 font-extrabold shadow-lg shadow-black/60 active:scale-95 transition flex items-center gap-2">
+  <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg><span id="fabTxt">Encargo</span>
+</button>
+
+<nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-nog-800/95 backdrop-blur border-t border-nog-600 safe-b">
+  <div class="grid grid-cols-3">
+    <button data-goto="encargos" class="tabbtn py-2.5 flex flex-col items-center gap-1 text-[11px] font-semibold">
+      <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>Encargos</button>
+    <button data-goto="caja" class="tabbtn py-2.5 flex flex-col items-center gap-1 text-[11px] font-semibold">
+      <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18v12H3z"/><path d="M3 11h18"/><circle cx="17" cy="15" r="1.4"/></svg>Caja</button>
+    <button data-goto="productos" class="tabbtn py-2.5 flex flex-col items-center gap-1 text-[11px] font-semibold">
+      <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/></svg>Productos</button>
+  </div>
+</nav>
+
+<div id="overlay" class="fixed inset-0 z-40 bg-black/65 backdrop-blur-sm hidden"></div>
+<div id="sheet" class="sheet down fixed inset-x-0 bottom-0 z-50 max-h-[93vh] overflow-y-auto bg-nog-800 rounded-t-2xl border-t border-nog-600 hidden">
+  <div class="sticky top-0 bg-nog-800 px-4 pt-4 pb-2.5 flex items-center gap-3 border-b border-nog-700 z-10">
+    <div class="lg:hidden absolute left-1/2 -translate-x-1/2 top-1.5 w-10 h-1 rounded-full bg-nog-500"></div>
+    <h2 id="sheetTitle" class="text-base font-bold flex-1 truncate"></h2>
+    <button id="sheetClose" class="text-sm text-stone-400 active:opacity-60">Cerrar</button>
+  </div>
+  <div id="sheetBody" class="p-4 lg:p-6 safe-b"></div>
+</div>
+
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-44 lg:bottom-10 z-[60] hidden pointer-events-none">
+  <div id="toastMsg" class="pop bg-mad-200 text-nog-900 text-sm font-bold text-center px-4 py-2.5 rounded-2xl shadow-lg shadow-black/50 max-w-[85vw]"></div>
+</div>
+
+<script>
+/* ============================================================
+   Nerva — encargos, señas y caja
+   Funciona 100% offline (localStorage). La sincronización entre
+   celulares se activa desde Ajustes pegando la config de Firebase.
+   ============================================================ */
+
+const RESINAS = ['Negra','Marrón','Ámbar','Azul','Transparente','Blanca','Verde'];
+const METODOS = { efectivo:'Efectivo', transferencia:'Transferencia' };
+const CAT_SALIDA  = ['Madera','Resina','Insumos','Herramientas','Envíos','Publicidad','Otros'];
+const CAT_ENTRADA = ['Venta directa','Otro ingreso'];
+
+/* Un encargo pasa por el taller: se toma, se trabaja, queda listo y se entrega. */
+const ESTADOS = {
+  pendiente: { txt:'Sin empezar', cls:'bg-stone-500/15 text-stone-300 border-stone-500/30', next:'proceso',   accion:'Empezar' },
+  proceso:   { txt:'En proceso',  cls:'bg-mad-500/15 text-mad-300 border-mad-500/35',       next:'listo',     accion:'Está listo' },
+  listo:     { txt:'Listo',       cls:'bg-sky-400/15 text-sky-300 border-sky-400/35',       next:'entregado', accion:'Entregar' },
+  entregado: { txt:'Entregado',   cls:'bg-ok/15 text-ok border-ok/30',                      next:null,        accion:null },
+  cancelado: { txt:'Cancelado',   cls:'bg-bad/15 text-bad border-bad/30',                   next:null,        accion:null }
+};
+const ACTIVOS = ['pendiente','proceso','listo'];
+
+/* ---------- estado en memoria ---------- */
+const COLS = ['encargos','movs','productos'];
+let DATA  = { encargos:[], movs:[], productos:[] };
+let CFG   = { negocioId:'', fb:null };
+let UI    = { tab:'encargos', filtro:'activos', q:'', mes:null, borrador:null, original:null, pg:null };
+let CLOUD = { on:false, db:null, fns:null, unsubs:[], error:null, arrancada:{} };
+
+/* ---------- helpers ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => (n < 0 ? '−$' : '$') + Math.abs(Math.round(Number(n) || 0)).toLocaleString('es-UY');
+const pad = n => String(n).padStart(2, '0');
+const clone = o => JSON.parse(JSON.stringify(o));
+const soloNum = v => Number(String(v == null ? '' : v).replace(/[^\d]/g, '')) || 0;
+
+const isoDe = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const hoyISO = () => isoDe(new Date());
+const mesActual = () => hoyISO().slice(0, 7);
+const fechaDe = iso => { const p = iso.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const DIAS  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DIASC = ['dom','lun','mar','mié','jue','vie','sáb'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const fechaCorta = iso => { if(!iso) return ''; const f = fechaDe(iso); return DIASC[f.getDay()] + ' ' + f.getDate() + '/' + pad(f.getMonth() + 1); };
+const fechaLarga = iso => { if(!iso) return ''; const f = fechaDe(iso); return DIAS[f.getDay()] + ' ' + f.getDate() + '/' + pad(f.getMonth() + 1); };
+const mesLabel = m => { const p = m.split('-'); return MESES[Number(p[1]) - 1] + ' ' + p[0]; };
+function diasHasta(iso){
+  const h = new Date(); h.setHours(0,0,0,0);
+  return Math.round((fechaDe(iso) - h) / 864e5);
+}
+
+function toast(msg){
+  DESHACER = null;
+  $('#toastMsg').textContent = msg;
+  $('#toast').classList.remove('hidden');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => $('#toast').classList.add('hidden'), 2200);
+}
+
+/* Borrar es irreversible y, con la sincronización activa, borra para todos a la vez.
+   Por eso cada borrado deja unos segundos para arrepentirse. */
+let DESHACER = null;
+function toastDeshacer(msg, alDeshacer){
+  DESHACER = alDeshacer;
+  $('#toastMsg').innerHTML = esc(msg) +
+    ' <button id="btnDeshacer" class="ml-2 font-black text-mad-600 underline underline-offset-2 pointer-events-auto">Deshacer</button>';
+  $('#toast').classList.remove('hidden');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { $('#toast').classList.add('hidden'); DESHACER = null; }, 7000);
+}
+
+/* ---------- persistencia local ---------- */
+const K = k => 'nerva:' + k;
+
+function loadLocal(){
+  try {
+    COLS.forEach(c => DATA[c] = JSON.parse(localStorage.getItem(K(c)) || '[]'));
+    CFG = Object.assign(CFG, JSON.parse(localStorage.getItem(K('config')) || '{}'));
+  } catch(e){ console.warn('No se pudo leer el almacenamiento local', e); }
+}
+
+function saveLocal(col){
+  try {
+    if(col === 'config') localStorage.setItem(K('config'), JSON.stringify(CFG));
+    else localStorage.setItem(K(col), JSON.stringify(DATA[col]));
+  } catch(e){ console.warn('No se pudo guardar', e); }
+}
+
+/* Escribe un registro: local siempre, y en la nube si está conectada. */
+function putDoc(col, obj, sinRender){
+  obj.upd = Date.now();
+  const i = DATA[col].findIndex(x => x.id === obj.id);
+  if(i >= 0) DATA[col][i] = obj; else DATA[col].push(obj);
+  saveLocal(col);
+  if(CLOUD.on) cloudPut(col, obj);
+  if(!sinRender) render();
+}
+
+function delDoc(col, id, sinRender){
+  DATA[col] = DATA[col].filter(x => x.id !== id);
+  saveLocal(col);
+  if(CLOUD.on) cloudDel(col, id);
+  if(!sinRender) render();
+}
+
+/* ---------- consultas ---------- */
+const productosOn = () => DATA.productos.filter(p => p.activo !== false).sort((a,b) => (a.orden||0) - (b.orden||0) || a.nombre.localeCompare(b.nombre));
+const pagosDe = id => DATA.movs.filter(m => m.encargoId === id && m.tipo === 'entrada').sort((a,b) => (a.fecha||'').localeCompare(b.fecha||'') || a.ts - b.ts);
+const totalEnc = e => (e.items || []).reduce((s,i) => s + (Number(i.precio) || 0) * (Number(i.cant) || 0), 0);
+const proximoNum = () => DATA.encargos.reduce((m,e) => Math.max(m, e.num || 0), 0) + 1;
+
+/* Cuánto vale, cuánto se pagó y cuánto falta. "pagos" permite calcularlo sobre el
+   borrador del editor, que todavía no se guardó. */
+function cuentaEnc(e, pagos){
+  const total  = totalEnc(e);
+  const pagado = (pagos || pagosDe(e.id)).reduce((s,m) => s + (Number(m.monto) || 0), 0);
+  const saldo  = Math.max(0, total - pagado);
+  let estado;
+  if(total <= 0)          estado = pagado > 0 ? 'senado' : 'sinprecio';
+  else if(pagado <= 0)    estado = 'sinsena';
+  else if(pagado >= total) estado = 'pagado';
+  else                    estado = 'senado';
+  return { total, pagado, saldo, estado, deMas: Math.max(0, pagado - total) };
+}
+
+/* Cómo se llama un pago según lo que ya se había pagado antes. */
+function categoriaPago(total, antes, monto){
+  const despues = antes + monto;
+  if(antes <= 0) return (total > 0 && despues >= total) ? 'Pago total' : 'Seña';
+  return (total > 0 && despues >= total) ? 'Saldo' : 'A cuenta';
+}
+
+function resumenEncargos(){
+  const vivos = DATA.encargos.filter(e => e.estado !== 'cancelado');
+  const activos = vivos.filter(e => ACTIVOS.includes(e.estado));
+  let porCobrar = 0, deudores = 0, senas = 0, atrasados = 0, semana = 0;
+  vivos.forEach(e => {
+    const c = cuentaEnc(e);
+    if(c.saldo > 0){ porCobrar += c.saldo; deudores++; }
+    if(ACTIVOS.includes(e.estado)){
+      senas += c.pagado;
+      if(e.fechaEntrega){
+        const d = diasHasta(e.fechaEntrega);
+        if(d < 0) atrasados++; else if(d <= 7) semana++;
+      }
+    }
+  });
+  return { activos: activos.length, porCobrar, deudores, senas, atrasados, semana };
+}
+
+function clientesConocidos(){
+  const m = new Map();
+  DATA.encargos.slice().sort((a,b) => b.ts - a.ts).forEach(e => {
+    const k = (e.cliente || '').trim().toLowerCase();
+    if(k && !m.has(k)) m.set(k, { cliente:e.cliente.trim(), tel:e.tel || '', dir:e.dir || '' });
+  });
+  return Array.from(m.values());
+}
+
+function nombresDePiezas(){
+  const s = new Set(productosOn().map(p => p.nombre));
+  DATA.encargos.forEach(e => (e.items || []).forEach(i => { if(i.nombre) s.add(i.nombre.trim()); }));
+  return Array.from(s).sort((a,b) => a.localeCompare(b));
+}
+
+/* ---------- WhatsApp ---------- */
+function telWa(t){
+  let d = String(t || '').replace(/\D/g, '');
+  if(!d) return '';
+  if(d.indexOf('598') === 0 && d.length >= 11) return d;
+  if(d[0] === '0') d = d.slice(1);
+  return d.length === 8 ? '598' + d : d;
+}
+/* En la compu, wa.me abre una página intermedia que pide permisos: ahí va directo
+   a WhatsApp Web, siempre en la misma pestaña. */
+function linkWa(tel, texto){
+  const n = telWa(tel);
+  const escritorio = window.matchMedia('(pointer:fine)').matches && window.innerWidth >= 1024;
+  if(escritorio) return 'https://web.whatsapp.com/send?' + (n ? 'phone=' + n + '&' : '') + 'text=' + encodeURIComponent(texto);
+  return 'https://wa.me/' + n + '?text=' + encodeURIComponent(texto);
+}
+const primerNombre = s => String(s || '').trim().split(/\s+/)[0] || '';
+
+function descItem(i){
+  const det = [i.medida, i.resina ? 'resina ' + i.resina.toLowerCase() : '', i.grabado ? 'grabado "' + i.grabado + '"' : ''].filter(Boolean).join(' · ');
+  return (i.cant > 1 ? i.cant + '× ' : '') + (i.nombre || 'Pieza') + (det ? ' (' + det + ')' : '');
+}
+
+function textoComprobante(e, pagos){
+  const c = cuentaEnc(e, pagos);
+  const ps = pagos || pagosDe(e.id);
+  const l = ['NERVA · Más que madera...', '', 'Encargo #' + e.num + ' — ' + (e.cliente || '')];
+  (e.items || []).forEach(i => l.push('• ' + descItem(i) + (i.precio ? ' — ' + money(i.precio * i.cant) : '')));
+  if(c.total) l.push('', 'Total: ' + money(c.total));
+  ps.forEach(p => l.push(p.cat + ': ' + money(p.monto) + ' (' + (METODOS[p.metodo] || p.metodo).toLowerCase() + ', ' + fechaCorta(p.fecha) + ')'));
+  if(c.total) l.push(c.saldo > 0 ? 'Saldo a pagar: ' + money(c.saldo) : 'Pago completo ✔');
+  if(e.fechaEntrega) l.push('Entrega: ' + fechaLarga(e.fechaEntrega) + (e.entrega === 'envio' ? ' · envío' : ' · retira'));
+  l.push('', '¡Gracias por elegirnos!');
+  return l.join('\n');
+}
+
+function textoListo(e){
+  const c = cuentaEnc(e);
+  return '¡Hola ' + primerNombre(e.cliente) + '! Te aviso que tu encargo de Nerva ya está pronto. ' +
+    (c.saldo > 0 ? 'Queda un saldo de ' + money(c.saldo) + '. ' : '') +
+    (e.entrega === 'envio' ? '¿Cuándo te queda bien que te lo llevemos?' : '¿Cuándo te queda bien para retirarlo?');
+}
+
+function compartir(txt){
+  if(navigator.share){ navigator.share({ text:txt }).catch(() => {}); return; }
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('Copiado: pegalo donde quieras'), () => toast('No se pudo copiar'));
+  else toast('Tu navegador no permite compartir');
+}
+
+/* ============================ RENDER ============================ */
+
+function render(){
+  $$('.tabpane').forEach(s => s.classList.toggle('hidden', s.dataset.tab !== UI.tab));
+  $$('.tabbtn').forEach(b => {
+    const on = b.dataset.goto === UI.tab;
+    b.classList.toggle('text-mad-400', on);
+    b.classList.toggle('text-stone-400', !on);
+  });
+  const fab = { encargos:'Encargo', caja:'Gasto', productos:'Producto' }[UI.tab];
+  $('#fabTxt').textContent = fab;
+  $('#btnNuevoTopTxt').textContent = { encargos:'Nuevo encargo', caja:'Nuevo gasto', productos:'Nuevo producto' }[UI.tab];
+  if(UI.tab === 'encargos')  renderEncargos();
+  if(UI.tab === 'caja')      renderCaja();
+  if(UI.tab === 'productos') renderProductos();
+}
+
+function tile(label, valor, extra, claseValor){
+  return '<div class="card p-2.5">' +
+    '<p class="text-[10px] uppercase tracking-wide text-stone-400 font-bold">' + esc(label) + '</p>' +
+    '<p class="text-lg font-extrabold tabular leading-tight mt-0.5 ' + (claseValor || '') + '">' + esc(valor) + '</p>' +
+    (extra ? '<p class="text-[10px] text-stone-500 leading-tight mt-0.5">' + esc(extra) + '</p>' : '') +
+  '</div>';
+}
+
+function vacio(txt, sub){
+  return '<div class="col-span-full text-center py-14 px-6">' +
+    '<img src="emblema.png" alt="" class="w-16 h-16 mx-auto mb-3 rounded-full opacity-30 grayscale">' +
+    '<p class="text-sm text-stone-300 font-semibold">' + esc(txt) + '</p>' +
+    (sub ? '<p class="text-xs text-stone-500 mt-1 max-w-xs mx-auto leading-snug">' + esc(sub) + '</p>' : '') +
+  '</div>';
+}
+
+/* ---------------------------- ENCARGOS ---------------------------- */
+
+const FILTROS = [
+  { id:'activos',   txt:'Activos',     f:e => ACTIVOS.includes(e.estado) },
+  { id:'pendiente', txt:'Sin empezar', f:e => e.estado === 'pendiente' },
+  { id:'proceso',   txt:'En proceso',  f:e => e.estado === 'proceso' },
+  { id:'listo',     txt:'Listos',      f:e => e.estado === 'listo' },
+  { id:'saldo',     txt:'Deben plata', f:e => e.estado !== 'cancelado' && cuentaEnc(e).saldo > 0 },
+  { id:'entregado', txt:'Entregados',  f:e => e.estado === 'entregado' },
+  { id:'todos',     txt:'Todos',       f:e => true }
+];
+
+function coincide(e, q){
+  if(!q) return true;
+  q = q.toLowerCase().trim();
+  const hay = ['#' + e.num, e.cliente, e.tel, e.notas].concat((e.items || []).map(i => i.nombre + ' ' + (i.grabado || '')))
+    .join(' ').toLowerCase();
+  return hay.indexOf(q) >= 0;
+}
+
+/* Los activos se ordenan por fecha de entrega (lo más urgente arriba); los
+   entregados, del último al primero. */
+function ordenar(lista){
+  if(UI.filtro === 'entregado') return lista.sort((a,b) => (b.tsEntrega || b.ts) - (a.tsEntrega || a.ts));
+  if(UI.filtro === 'todos') return lista.sort((a,b) => b.num - a.num);
+  return lista.sort((a,b) => {
+    const fa = a.fechaEntrega || '9999', fb = b.fechaEntrega || '9999';
+    return fa.localeCompare(fb) || a.num - b.num;
+  });
+}
+
+function renderEncargos(){
+  const r = resumenEncargos();
+  $('#resumenEnc').innerHTML =
+    tile('Activos', String(r.activos), r.atrasados ? r.atrasados + (r.atrasados === 1 ? ' atrasado' : ' atrasados') : (r.semana ? r.semana + ' para esta semana' : 'en el taller'), r.atrasados ? 'text-bad' : '') +
+    tile('Señas', money(r.senas), 'de lo que falta entregar') +
+    tile('Por cobrar', money(r.porCobrar), r.deudores ? r.deudores + (r.deudores === 1 ? ' encargo' : ' encargos') : 'nadie debe nada', r.porCobrar ? 'text-mad-300' : '');
+
+  $('#filtros').innerHTML = FILTROS.map(f => {
+    const n = DATA.encargos.filter(f.f).length;
+    const on = UI.filtro === f.id;
+    return '<button data-filtro="' + f.id + '" class="chip shrink-0 ' + (on ? 'on' : '') + '">' +
+      esc(f.txt) + (n ? ' <span class="opacity-60">' + n + '</span>' : '') + '</button>';
+  }).join('');
+
+  renderListaEnc();
+}
+
+function renderListaEnc(){
+  const filtro = FILTROS.find(f => f.id === UI.filtro) || FILTROS[0];
+  const lista = ordenar(DATA.encargos.filter(filtro.f).filter(e => coincide(e, UI.q)));
+  if(!lista.length){
+    $('#listaEnc').innerHTML = UI.q ? vacio('No hay encargos que coincidan con "' + UI.q + '"')
+      : !DATA.encargos.length ? vacio('Todavía no hay encargos', 'Tocá "Encargo" para anotar el primero: quién, qué pieza, para cuándo y cuánto dejó de seña.')
+      : vacio('No hay encargos en "' + filtro.txt + '"');
+    return;
+  }
+  $('#listaEnc').innerHTML = lista.map(cardEncargo).join('');
+}
+
+function chipFecha(e){
+  if(!e.fechaEntrega) return '<span class="text-stone-500">Sin fecha de entrega</span>';
+  let txt = fechaCorta(e.fechaEntrega), cls = 'text-stone-300';
+  if(ACTIVOS.includes(e.estado)){
+    const d = diasHasta(e.fechaEntrega);
+    if(d < 0){ txt += ' · atrasado ' + (-d) + (d === -1 ? ' día' : ' días'); cls = 'text-bad font-bold'; }
+    else if(d === 0){ txt += ' · es hoy'; cls = 'text-warn font-bold'; }
+    else if(d === 1){ txt += ' · mañana'; cls = 'text-warn font-bold'; }
+    else if(d <= 7){ txt += ' · en ' + d + ' días'; cls = 'text-mad-300'; }
+  }
+  return '<span class="' + cls + '">' + esc(txt) + '</span>';
+}
+
+function barraPago(c){
+  const pct = c.total > 0 ? Math.min(100, Math.round(c.pagado / c.total * 100)) : (c.pagado > 0 ? 100 : 0);
+  const color = c.estado === 'pagado' ? 'bg-ok' : 'bg-gradient-to-r from-mad-600 to-oro';
+  let txt;
+  if(c.estado === 'sinprecio') txt = '<span class="text-stone-500">Precio sin definir</span>';
+  else if(c.estado === 'sinsena') txt = '<span class="text-warn font-bold">Sin seña</span> <span class="text-stone-400">· total ' + money(c.total) + '</span>';
+  else if(c.estado === 'pagado') txt = '<span class="text-ok font-bold">Pagado ✔</span> <span class="text-stone-400">' + money(c.total) + (c.deMas ? ' · ' + money(c.deMas) + ' de más' : '') + '</span>';
+  else if(c.total <= 0) txt = '<span class="text-mad-300 font-bold">Seña ' + money(c.pagado) + '</span> <span class="text-stone-400">· precio sin definir</span>';
+  else txt = '<span class="text-mad-300 font-bold">Señado ' + money(c.pagado) + '</span> <span class="text-stone-400">de ' + money(c.total) + ' · faltan </span><span class="font-bold text-stone-100">' + money(c.saldo) + '</span>';
+  return '<div class="mt-2.5">' +
+    '<div class="h-1.5 rounded-full bg-nog-600 overflow-hidden"><div class="h-full ' + color + '" style="width:' + pct + '%"></div></div>' +
+    '<p class="text-[12px] mt-1.5 tabular">' + txt + '</p>' +
+  '</div>';
+}
+
+function cardEncargo(e){
+  const est = ESTADOS[e.estado] || ESTADOS.pendiente;
+  const c = cuentaEnc(e);
+  const items = e.items || [];
+  const lineas = items.slice(0, 3).map(i => {
+    const det = [i.medida, i.resina ? 'resina ' + i.resina.toLowerCase() : '', i.grabado ? 'grabado "' + i.grabado + '"' : ''].filter(Boolean).join(' · ');
+    return '<p class="text-[14px] text-stone-100 leading-snug">' + (i.cant > 1 ? '<span class="font-bold text-mad-300">' + i.cant + '×</span> ' : '') + esc(i.nombre || 'Pieza') + '</p>' +
+      (det ? '<p class="text-[12px] text-stone-400 leading-snug truncate">' + esc(det) + '</p>' : '');
+  }).join('') +
+    (items.length > 3 ? '<p class="text-[11px] text-stone-500">+' + (items.length - 3) + ' más</p>' : '') +
+    (!items.length && e.notas ? '<p class="text-[13px] text-stone-300 leading-snug line-clamp-2">' + esc(e.notas) + '</p>' : '');
+
+  let acciones = '';
+  if(est.next){
+    acciones += '<button data-avanzar="' + e.id + '" class="flex-1 py-2.5 rounded-xl font-extrabold text-sm active:scale-[.98] transition ' +
+      (e.estado === 'listo' ? 'bg-mad-500 text-nog-900 hover:bg-mad-400' : 'bg-nog-700 border border-nog-600 text-stone-100 hover:bg-nog-600') + '">' + est.accion + '</button>';
+  }
+  if(e.estado === 'listo' && e.tel){
+    acciones += '<a href="' + esc(linkWa(e.tel, textoListo(e))) + '" target="whatsapp" rel="noopener" class="px-3.5 py-2.5 rounded-xl border border-ok/40 text-ok font-bold text-sm active:bg-ok/10 hover:bg-ok/10">Avisar</a>';
+  }
+  if(e.estado === 'entregado' && c.saldo > 0){
+    acciones += '<button data-cobrar="' + e.id + '" class="flex-1 py-2.5 rounded-xl bg-mad-500 text-nog-900 font-extrabold text-sm active:scale-[.98] transition">Cobrar saldo ' + money(c.saldo) + '</button>';
+  }
+
+  return '<div data-enc="' + e.id + '" class="card p-3.5 cursor-pointer hover:border-nog-500 transition ' + (e.estado === 'cancelado' ? 'opacity-50' : '') + '">' +
+    '<div class="flex items-start gap-2">' +
+      '<span class="text-[12px] font-bold text-stone-500 tabular mt-0.5">#' + e.num + '</span>' +
+      '<p class="flex-1 min-w-0 font-bold text-[15px] leading-tight truncate">' + esc(e.cliente || 'Sin nombre') + '</p>' +
+      '<span class="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full border ' + est.cls + '">' + est.txt + '</span>' +
+    '</div>' +
+    '<div class="mt-2 space-y-0.5">' + lineas + '</div>' +
+    '<div class="mt-2 flex items-center gap-2 text-[12px]">' +
+      '<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-stone-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>' +
+      chipFecha(e) +
+      '<span class="ml-auto text-stone-500">' + (e.entrega === 'envio' ? 'Envío' : 'Retira') + '</span>' +
+    '</div>' +
+    barraPago(c) +
+    (acciones ? '<div class="mt-3 flex gap-2">' + acciones + '</div>' : '') +
+  '</div>';
+}
+
+/* ---------------------------- CAJA ---------------------------- */
+
+function mesesConDatos(){
+  const s = new Set(DATA.movs.map(m => (m.fecha || '').slice(0, 7)).filter(Boolean));
+  s.add(mesActual());
+  return Array.from(s).sort().reverse();
+}
+
+function resumenMovs(ms){
+  const r = { ent:0, sal:0, ef:0, tr:0, efE:0, efS:0, trE:0, trS:0, porCatS:{}, porCatE:{} };
+  ms.forEach(m => {
+    const v = Number(m.monto) || 0;
+    const entra = m.tipo === 'entrada';
+    if(entra){ r.ent += v; r.porCatE[m.cat || 'Otro ingreso'] = (r.porCatE[m.cat || 'Otro ingreso'] || 0) + v; }
+    else     { r.sal += v; r.porCatS[m.cat || 'Otros'] = (r.porCatS[m.cat || 'Otros'] || 0) + v; }
+    if(m.metodo === 'efectivo'){ entra ? r.efE += v : r.efS += v; }
+    else                       { entra ? r.trE += v : r.trS += v; }
+  });
+  r.neto = r.ent - r.sal;
+  r.ef = r.efE - r.efS;
+  r.tr = r.trE - r.trS;
+  return r;
+}
+
+function barras(obj, total, color){
+  const filas = Object.keys(obj).map(k => ({ k, v:obj[k] })).sort((a,b) => b.v - a.v);
+  if(!filas.length) return '<p class="text-[12px] text-stone-500">Nada cargado este mes.</p>';
+  return filas.map(f => {
+    const pct = total ? Math.max(2, Math.round(f.v / total * 100)) : 0;
+    return '<div class="py-1.5">' +
+      '<div class="flex justify-between text-[13px]"><span class="text-stone-200">' + esc(f.k) + '</span><span class="tabular font-bold">' + money(f.v) + '</span></div>' +
+      '<div class="h-1.5 rounded-full bg-nog-700 mt-1 overflow-hidden"><div class="h-full ' + color + '" style="width:' + pct + '%"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function filaMov(m){
+  const entra = m.tipo === 'entrada';
+  const enc = m.encargoId ? DATA.encargos.find(e => e.id === m.encargoId) : null;
+  const concepto = enc ? 'Encargo #' + enc.num + ' · ' + enc.cliente : (m.concepto || m.cat || '—');
+  return '<button data-mov="' + m.id + '" class="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-nog-700/50 active:bg-nog-700">' +
+    '<span class="w-8 h-8 shrink-0 rounded-full grid place-items-center text-base font-black ' + (entra ? 'bg-ok/15 text-ok' : 'bg-bad/15 text-bad') + '">' + (entra ? '+' : '−') + '</span>' +
+    '<span class="flex-1 min-w-0">' +
+      '<span class="block text-[14px] font-semibold truncate">' + esc(concepto) + '</span>' +
+      '<span class="block text-[11px] text-stone-500">' + esc(m.cat || (entra ? 'Entrada' : 'Gasto')) + ' · ' + esc(METODOS[m.metodo] || '—') + '</span>' +
+    '</span>' +
+    '<span class="tabular font-bold text-[14px] ' + (entra ? 'text-ok' : 'text-stone-200') + '">' + (entra ? '+' : '−') + money(m.monto) + '</span>' +
+  '</button>';
+}
+
+function renderCaja(){
+  const meses = mesesConDatos();
+  if(!UI.mes || meses.indexOf(UI.mes) < 0) UI.mes = meses[0];
+  $('#selMes').innerHTML = meses.map(m => '<option value="' + m + '"' + (m === UI.mes ? ' selected' : '') + '>' + mesLabel(m) + (m === mesActual() ? ' (este mes)' : '') + '</option>').join('');
+
+  const ms = DATA.movs.filter(m => (m.fecha || '').slice(0, 7) === UI.mes);
+  const r = resumenMovs(ms);
+  const tot = resumenMovs(DATA.movs);
+  const enc = resumenEncargos();
+
+  /* movimientos agrupados por día, del más nuevo al más viejo */
+  const porDia = {};
+  ms.forEach(m => { (porDia[m.fecha] = porDia[m.fecha] || []).push(m); });
+  const dias = Object.keys(porDia).sort().reverse();
+  const listaMovs = dias.length
+    ? dias.map(d => {
+        const del = porDia[d].sort((a,b) => b.ts - a.ts);
+        const rr = resumenMovs(del);
+        return '<div>' +
+          '<div class="px-3.5 pt-3 pb-1 flex justify-between text-[11px] uppercase tracking-wide font-bold text-stone-500"><span>' + esc(fechaLarga(d)) + (d === hoyISO() ? ' · hoy' : '') + '</span><span class="tabular">' + (rr.neto >= 0 ? '+' : '') + money(rr.neto) + '</span></div>' +
+          del.map(filaMov).join('') +
+        '</div>';
+      }).join('')
+    : '<p class="px-3.5 py-8 text-center text-[13px] text-stone-500">No hay movimientos en ' + esc(mesLabel(UI.mes)) + '.<br>Las señas y saldos de los encargos aparecen acá solos.</p>';
+
+  $('#cajaBody').innerHTML =
+    '<div class="lg:col-span-2 grid grid-cols-3 gap-2">' +
+      tile('Entradas', money(r.ent), ms.filter(m => m.tipo === 'entrada').length + ' movimientos', 'text-ok') +
+      tile('Salidas', money(r.sal), ms.filter(m => m.tipo !== 'entrada').length + ' gastos', 'text-bad') +
+      tile('Resultado', money(r.neto), mesLabel(UI.mes), r.neto >= 0 ? 'text-mad-200' : 'text-bad') +
+    '</div>' +
+
+    '<div class="space-y-3">' +
+      '<div class="card p-3.5">' +
+        '<p class="lbl">Encargos</p>' +
+        '<div class="grid grid-cols-2 gap-3">' +
+          '<div><p class="text-[11px] text-stone-400">Por cobrar</p><p class="text-xl font-extrabold tabular text-mad-300">' + money(enc.porCobrar) + '</p><p class="text-[11px] text-stone-500">' + enc.deudores + (enc.deudores === 1 ? ' encargo con saldo' : ' encargos con saldo') + '</p></div>' +
+          '<div><p class="text-[11px] text-stone-400">Señas en mano</p><p class="text-xl font-extrabold tabular">' + money(enc.senas) + '</p><p class="text-[11px] text-stone-500">de encargos sin entregar</p></div>' +
+        '</div>' +
+        '<p class="text-[11px] text-stone-500 mt-2.5 leading-snug">Las señas ya están contadas en la caja, pero esas piezas todavía hay que hacerlas y entregarlas.</p>' +
+      '</div>' +
+
+      '<div class="card p-3.5">' +
+        '<p class="lbl">Por medio de pago · ' + esc(mesLabel(UI.mes)) + '</p>' +
+        '<div class="grid grid-cols-2 gap-3 text-[13px]">' +
+          '<div><p class="text-stone-400 text-[11px]">Efectivo</p><p class="text-lg font-extrabold tabular">' + money(r.ef) + '</p><p class="text-[11px] text-stone-500 tabular">+' + money(r.efE) + ' / −' + money(r.efS) + '</p></div>' +
+          '<div><p class="text-stone-400 text-[11px]">Transferencia</p><p class="text-lg font-extrabold tabular">' + money(r.tr) + '</p><p class="text-[11px] text-stone-500 tabular">+' + money(r.trE) + ' / −' + money(r.trS) + '</p></div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="card p-3.5"><p class="lbl">Gastos por rubro</p>' + barras(r.porCatS, r.sal, 'bg-bad/70') + '</div>' +
+      '<div class="card p-3.5"><p class="lbl">Entradas por tipo</p>' + barras(r.porCatE, r.ent, 'bg-ok/70') + '</div>' +
+
+      '<div class="card p-3.5">' +
+        '<p class="lbl">Acumulado desde el primer registro</p>' +
+        '<div class="grid grid-cols-3 gap-2 text-[13px]">' +
+          '<div><p class="text-stone-400 text-[11px]">Efectivo</p><p class="font-extrabold tabular">' + money(tot.ef) + '</p></div>' +
+          '<div><p class="text-stone-400 text-[11px]">Transferencia</p><p class="font-extrabold tabular">' + money(tot.tr) + '</p></div>' +
+          '<div><p class="text-stone-400 text-[11px]">Total</p><p class="font-extrabold tabular text-mad-200">' + money(tot.neto) + '</p></div>' +
+        '</div>' +
+      '</div>' +
+      '<button id="btnCompartirMes" class="w-full py-2.5 rounded-xl border border-nog-600 font-bold text-sm text-stone-300 active:bg-nog-700 hover:bg-nog-700">Compartir resumen de ' + esc(mesLabel(UI.mes)) + '</button>' +
+    '</div>' +
+
+    '<div class="card overflow-hidden pb-1">' +
+      '<p class="lbl px-3.5 pt-3.5 mb-0">Movimientos</p>' + listaMovs +
+    '</div>';
+}
+
+function textoResumenMes(mes){
+  const ms = DATA.movs.filter(m => (m.fecha || '').slice(0, 7) === mes);
+  const r = resumenMovs(ms);
+  const enc = resumenEncargos();
+  const l = ['NERVA · Caja de ' + mesLabel(mes), '',
+    'Entradas: ' + money(r.ent), 'Salidas: ' + money(r.sal), 'Resultado: ' + money(r.neto), '',
+    'Efectivo: ' + money(r.ef) + ' · Transferencia: ' + money(r.tr)];
+  const gastos = Object.keys(r.porCatS).sort((a,b) => r.porCatS[b] - r.porCatS[a]);
+  if(gastos.length){ l.push('', 'Gastos:'); gastos.forEach(k => l.push('• ' + k + ': ' + money(r.porCatS[k]))); }
+  l.push('', 'Por cobrar de encargos: ' + money(enc.porCobrar));
+  return l.join('\n');
+}
+
+/* ---------------------------- PRODUCTOS ---------------------------- */
+
+function renderProductos(){
+  const ps = DATA.productos.slice().sort((a,b) => (a.orden||0) - (b.orden||0) || a.nombre.localeCompare(b.nombre));
+  if(!ps.length){
+    $('#listaProd').innerHTML = vacio('Todavía no hay productos', 'Cargá lo que hacen con su precio: tablas, mesas, mesadas, cada tamaño por separado. Después, al tomar un encargo, se agregan tocando el nombre.');
+    return;
+  }
+  $('#listaProd').innerHTML = ps.map(p =>
+    '<button data-prod="' + p.id + '" class="card p-3.5 text-left hover:border-nog-500 transition ' + (p.activo === false ? 'opacity-50' : '') + '">' +
+      '<div class="flex items-start gap-2">' +
+        '<p class="flex-1 font-bold text-[15px] leading-tight">' + esc(p.nombre) + '</p>' +
+        '<p class="font-extrabold tabular text-mad-300">' + (p.precio ? money(p.precio) : '<span class="text-stone-500 text-sm font-semibold">sin precio</span>') + '</p>' +
+      '</div>' +
+      (p.desc ? '<p class="text-[12px] text-stone-400 mt-1 leading-snug">' + esc(p.desc) + '</p>' : '') +
+      (p.activo === false ? '<p class="text-[11px] text-stone-500 mt-1">Oculto al cargar encargos</p>' : '') +
+    '</button>').join('');
+}
+
+/* ============================ SHEET ============================ */
+
+function abrirSheet(titulo, html, chico){
+  clearTimeout(toast._t); $('#toast').classList.add('hidden'); DESHACER = null;
+  $('#sheetTitle').textContent = titulo;
+  $('#sheetBody').innerHTML = html;
+  $('#sheet').classList.toggle('chico', !!chico);
+  $('#overlay').classList.remove('hidden');
+  $('#sheet').classList.remove('hidden');
+  $('#sheet').scrollTop = 0;
+  requestAnimationFrame(() => $('#sheet').classList.remove('down'));
+}
+
+function hayCambiosSinGuardar(){
+  if(!UI.borrador) return false;
+  return JSON.stringify(UI.borrador) !== UI.original || (UI.pg && soloNum(UI.pg.monto) > 0);
+}
+
+function cerrarSheet(forzar){
+  if(!forzar && hayCambiosSinGuardar() && !confirm('¿Cerrar sin guardar los cambios del encargo?')) return;
+  $('#sheet').classList.add('down');
+  $('#overlay').classList.add('hidden');
+  setTimeout(() => $('#sheet').classList.add('hidden'), 220);
+  UI.borrador = null; UI.original = null; UI.pg = null; UI.mov = null;
+}
+
+function chips(lista, actual, attr, extra){
+  return lista.map(x => {
+    const id = typeof x === 'string' ? x : x.id;
+    const txt = typeof x === 'string' ? x : x.txt;
+    return '<button type="button" data-' + attr + '="' + esc((extra != null ? extra + '|' : '') + id) + '" class="chip ' + (id === actual ? 'on' : '') + '">' + esc(txt) + '</button>';
+  }).join('');
+}
+
+/* ======================= EDITOR DE ENCARGO ======================= */
+
+const itemNuevo = () => ({ id:uid(), nombre:'', medida:'', resina:'', grabado:'', cant:1, precio:0 });
+
+function abrirEncargo(id){
+  const e = id ? DATA.encargos.find(x => x.id === id) : null;
+  const b = e ? clone(e)
+    : { id:uid(), num:proximoNum(), ts:Date.now(), cliente:'', tel:'', items:[itemNuevo()],
+        fechaEntrega:'', entrega:'retira', dir:'', notas:'', estado:'pendiente' };
+  b.pagos = e ? clone(pagosDe(e.id)) : [];
+  UI.borrador = b;
+  UI.original = JSON.stringify(b);
+  UI.pg = { monto:'', metodo:'', fecha:hoyISO() };
+  abrirSheet(e ? 'Encargo #' + e.num + ' · ' + e.cliente : 'Nuevo encargo #' + b.num, formEncargoHTML(!!e));
+  pintarBorrador();
+  if(!e) setTimeout(() => { const i = $('#enCliente'); if(i) i.focus(); }, 260);
+}
+
+function formEncargoHTML(edicion){
+  const b = UI.borrador;
+  return '<div class="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-7">' +
+    '<div class="space-y-5">' +
+      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">' +
+        '<div><label class="lbl" for="enCliente">Cliente</label>' +
+          '<input id="enCliente" data-b="cliente" list="dlClientes" class="fld" placeholder="Nombre" autocomplete="off" value="' + esc(b.cliente) + '"></div>' +
+        '<div><label class="lbl" for="enTel">Teléfono / WhatsApp</label>' +
+          '<input id="enTel" data-b="tel" type="tel" inputmode="tel" class="fld" placeholder="09X XXX XXX" value="' + esc(b.tel) + '"></div>' +
+      '</div>' +
+
+      '<div>' +
+        '<label class="lbl">Piezas</label>' +
+        '<div id="enCatalogo" class="flex flex-wrap gap-1.5 mb-2.5"></div>' +
+        '<div id="enItems" class="space-y-2.5"></div>' +
+        '<button type="button" id="btnAddPieza" class="mt-2.5 w-full py-2.5 rounded-xl border border-dashed border-nog-500 text-stone-300 font-bold text-sm active:bg-nog-700 hover:bg-nog-700">+ Otra pieza</button>' +
+        '<div id="enTotal" class="mt-3"></div>' +
+      '</div>' +
+
+      '<div><label class="lbl" for="enNotas">Notas del diseño</label>' +
+        '<textarea id="enNotas" data-b="notas" rows="3" class="fld" placeholder="Forma, tipo de madera, terminación, foto que mandó el cliente…">' + esc(b.notas) + '</textarea></div>' +
+    '</div>' +
+
+    '<div class="space-y-5">' +
+      '<div>' +
+        '<label class="lbl" for="enFecha">Entrega</label>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<input id="enFecha" data-b="fechaEntrega" type="date" class="fld" value="' + esc(b.fechaEntrega) + '">' +
+          '<div id="enModo" class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-nog-700 border border-nog-600"></div>' +
+        '</div>' +
+        '<input id="enDir" data-b="dir" class="fld mt-2" placeholder="Dirección del envío" value="' + esc(b.dir) + '">' +
+      '</div>' +
+
+      '<div><label class="lbl">Estado</label><div id="enEstado" class="flex flex-wrap gap-1.5"></div></div>' +
+
+      '<div><label class="lbl">Seña y pagos</label><div id="enPagos"></div></div>' +
+
+      '<div class="space-y-2 pt-1">' +
+        '<button type="button" id="btnGuardarEnc" class="w-full py-3.5 rounded-xl bg-mad-500 text-nog-900 font-extrabold active:scale-[.98] transition hover:bg-mad-400">Guardar encargo</button>' +
+        '<div class="grid ' + (edicion ? 'grid-cols-2' : 'grid-cols-1') + ' gap-2">' +
+          '<button type="button" id="btnComprobante" class="py-2.5 rounded-xl border border-nog-600 font-bold text-sm text-stone-200 active:bg-nog-700 hover:bg-nog-700">Mandar comprobante</button>' +
+          (edicion ? '<button type="button" id="btnBorrarEnc" class="py-2.5 rounded-xl border border-bad/40 text-bad font-bold text-sm active:bg-bad/10 hover:bg-bad/10">Borrar encargo</button>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>' +
+  '<datalist id="dlClientes">' + clientesConocidos().map(c => '<option value="' + esc(c.cliente) + '">').join('') + '</datalist>' +
+  '<datalist id="dlPiezas">' + nombresDePiezas().map(n => '<option value="' + esc(n) + '">').join('') + '</datalist>';
+}
+
+function pintarBorrador(){
+  const b = UI.borrador;
+  if(!b) return;
+  const prods = productosOn();
+  $('#enCatalogo').innerHTML = prods.length
+    ? prods.map(p => '<button type="button" data-addprod="' + p.id + '" class="chip hover:border-mad-500">+ ' + esc(p.nombre) + (p.precio ? ' <span class="opacity-60 font-semibold">' + money(p.precio) + '</span>' : '') + '</button>').join('')
+    : '<p class="text-[11px] text-stone-500 leading-snug">Tip: si cargás tus productos en la pestaña <b>Productos</b>, aparecen acá para agregarlos de un toque.</p>';
+  pintarItems();
+  $('#enModo').innerHTML = [['retira','Retira'],['envio','Envío']].map(m =>
+    '<button type="button" data-modo="' + m[0] + '" class="py-1.5 rounded-lg text-sm font-bold ' + (b.entrega === m[0] ? 'bg-mad-500 text-nog-900' : 'text-stone-300') + '">' + m[1] + '</button>').join('');
+  $('#enDir').classList.toggle('hidden', b.entrega !== 'envio');
+  $('#enEstado').innerHTML = chips(Object.keys(ESTADOS).map(k => ({ id:k, txt:ESTADOS[k].txt })), b.estado, 'est');
+  pintarCuenta();
+}
+
+function pintarItems(){
+  const b = UI.borrador;
+  if(!b.items.length){
+    $('#enItems').innerHTML = '<p class="text-[12px] text-stone-500">Sin piezas cargadas.</p>';
+    return;
+  }
+  $('#enItems').innerHTML = b.items.map((it, i) =>
+    '<div class="rounded-xl border border-nog-600 bg-nog-900/40 p-2.5 space-y-2">' +
+      '<div class="flex gap-2">' +
+        '<input class="fld flex-1" list="dlPiezas" data-it="' + i + '|nombre" placeholder="Qué pieza (tabla, mesa, mesada…)" autocomplete="off" value="' + esc(it.nombre) + '">' +
+        '<button type="button" data-delit="' + i + '" class="w-10 shrink-0 rounded-xl border border-nog-600 text-stone-400 text-lg active:bg-nog-700" aria-label="Quitar pieza">×</button>' +
+      '</div>' +
+      '<div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">' +
+        '<input class="fld" data-it="' + i + '|medida" placeholder="Medida (60×40)" value="' + esc(it.medida) + '">' +
+        '<div class="flex items-center rounded-xl border border-nog-600 bg-nog-700 h-[2.75rem]">' +
+          '<button type="button" data-cant="' + i + '|-1" class="w-8 h-full text-lg text-stone-300" aria-label="Menos">−</button>' +
+          '<span class="w-6 text-center font-extrabold tabular">' + it.cant + '</span>' +
+          '<button type="button" data-cant="' + i + '|1" class="w-8 h-full text-lg text-stone-300" aria-label="Más">+</button>' +
+        '</div>' +
+        '<div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none">$</span>' +
+          '<input class="fld pl-6 tabular" inputmode="numeric" data-it="' + i + '|precio" placeholder="' + (it.cant > 1 ? 'c/u' : 'Precio') + '" value="' + (it.precio ? it.precio : '') + '"></div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-1 items-center"><span class="text-[10px] uppercase tracking-wide font-bold text-stone-500 mr-1">Resina</span>' +
+        RESINAS.map(r => '<button type="button" data-resina="' + i + '|' + r + '" class="chip !py-1 !px-2 !text-[11px] ' + (it.resina === r ? 'on' : '') + '">' + r + '</button>').join('') +
+        (it.resina && RESINAS.indexOf(it.resina) < 0 ? '<button type="button" data-resina="' + i + '|' + esc(it.resina) + '" class="chip on !py-1 !px-2 !text-[11px]">' + esc(it.resina) + '</button>' : '') +
+        '<button type="button" data-resina="' + i + '|__otra" class="chip !py-1 !px-2 !text-[11px]">Otra…</button>' +
+      '</div>' +
+      '<input class="fld text-sm" data-it="' + i + '|grabado" placeholder="Grabado o personalización (opcional)" value="' + esc(it.grabado) + '">' +
+    '</div>').join('');
+}
+
+/* Totales y pagos: se repintan al escribir un precio, sin tocar los campos de las piezas. */
+function pintarCuenta(){
+  const b = UI.borrador;
+  if(!b) return;
+  const c = cuentaEnc(b, b.pagos);
+  $('#enTotal').innerHTML = '<div class="flex items-baseline justify-between px-1">' +
+    '<span class="text-sm text-stone-400">Total del encargo</span>' +
+    '<span class="text-2xl font-extrabold tabular text-mad-200">' + money(c.total) + '</span></div>';
+
+  const pg = UI.pg;
+  const prox = categoriaPago(c.total, c.pagado, soloNum(pg.monto));
+  const rapidos = [];
+  if(c.total > 0 && c.pagado <= 0) rapidos.push(['Seña 50% · ' + money(Math.round(c.total / 2)), Math.round(c.total / 2)]);
+  if(c.saldo > 0) rapidos.push([(c.pagado > 0 ? 'Saldo · ' : 'Todo · ') + money(c.saldo), c.saldo]);
+
+  $('#enPagos').innerHTML =
+    '<div class="rounded-xl border border-nog-600 bg-nog-900/40 p-3">' +
+      barraPago(c).replace('mt-2.5', '') +
+      (b.pagos.length
+        ? '<div class="mt-2.5 divide-y divide-nog-700 border-t border-nog-700">' + b.pagos.map(p =>
+            '<div class="flex items-center gap-2 py-2 text-[13px]">' +
+              '<span class="font-bold text-stone-100">' + esc(p.cat) + '</span>' +
+              '<span class="text-stone-500 truncate">' + esc(fechaCorta(p.fecha)) + ' · ' + esc(METODOS[p.metodo] || '') + '</span>' +
+              '<span class="ml-auto tabular font-bold text-ok">' + money(p.monto) + '</span>' +
+              '<button type="button" data-delpago="' + p.id + '" class="w-7 h-7 rounded-lg text-stone-500 hover:text-bad active:bg-nog-700" aria-label="Quitar pago">×</button>' +
+            '</div>').join('') + '</div>'
+        : '') +
+    '</div>' +
+
+    (c.total > 0 && c.saldo <= 0 && b.pagos.length ? '' :
+    '<div class="mt-2.5 rounded-xl border border-nog-600 p-3 space-y-2.5">' +
+      '<p id="pgTitulo" class="text-[12px] font-bold text-stone-300">Registrar ' + (soloNum(pg.monto) ? prox.toLowerCase() : (c.pagado > 0 ? 'otro pago' : 'seña')) + '</p>' +
+      (rapidos.length ? '<div class="flex flex-wrap gap-1.5">' + rapidos.map(r => '<button type="button" data-pgmonto="' + r[1] + '" class="chip ' + (soloNum(pg.monto) === r[1] ? 'on' : '') + '">' + esc(r[0]) + '</button>').join('') + '</div>' : '') +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none">$</span>' +
+          '<input id="pgMonto" data-pg="monto" inputmode="numeric" class="fld pl-6 tabular" placeholder="Monto" value="' + (soloNum(pg.monto) || '') + '"></div>' +
+        '<input data-pg="fecha" type="date" class="fld" value="' + esc(pg.fecha) + '">' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2">' + Object.keys(METODOS).map(k =>
+        '<button type="button" data-pgmetodo="' + k + '" class="py-2 rounded-xl border text-sm font-bold ' + (pg.metodo === k ? 'bg-mad-500 border-mad-500 text-nog-900' : 'border-nog-600 text-stone-300') + '">' + METODOS[k] + '</button>').join('') +
+      '</div>' +
+      '<button type="button" id="btnAddPago" class="w-full py-2.5 rounded-xl bg-nog-600 font-extrabold text-sm active:scale-[.98] transition hover:bg-nog-500">Agregar pago</button>' +
+    '</div>');
+}
+
+function addPieza(prod){
+  const b = UI.borrador;
+  const it = itemNuevo();
+  if(prod){ it.nombre = prod.nombre; it.precio = Number(prod.precio) || 0; }
+  /* Si la última pieza está vacía, se completa esa en vez de agregar otra. */
+  const ult = b.items[b.items.length - 1];
+  if(prod && ult && !ult.nombre.trim() && !ult.precio) b.items[b.items.length - 1] = it;
+  else b.items.push(it);
+  pintarItems(); pintarCuenta();
+  if(!prod){
+    const ins = $$('[data-it$="|nombre"]');
+    if(ins.length) ins[ins.length - 1].focus();
+  }
+}
+
+/* Devuelve false si falta algo para poder agregar el pago. */
+function agregarPagoBorrador(){
+  const b = UI.borrador, pg = UI.pg;
+  const monto = soloNum(pg.monto);
+  if(!monto){ toast('Poné el monto del pago'); return false; }
+  if(!pg.metodo){ toast('Elegí si fue en efectivo o por transferencia'); return false; }
+  const c = cuentaEnc(b, b.pagos);
+  b.pagos.push({ id:uid(), tipo:'entrada', monto:monto, metodo:pg.metodo, fecha:pg.fecha || hoyISO(), ts:Date.now(),
+                 cat:categoriaPago(c.total, c.pagado, monto), encargoId:b.id });
+  UI.pg = { monto:'', metodo:'', fecha:hoyISO() };
+  pintarCuenta();
+  return true;
+}
+
+function guardarEncargo(){
+  const b = UI.borrador;
+  b.cliente = (b.cliente || '').trim();
+  if(!b.cliente){ toast('Poné el nombre del cliente'); $('#enCliente').focus(); return; }
+  /* Un pago escrito pero sin "Agregar" se agrega solo: es lo que uno espera al guardar. */
+  if(soloNum(UI.pg.monto) > 0 && !agregarPagoBorrador()) return;
+  b.items = b.items.filter(i => (i.nombre || '').trim() || Number(i.precio));
+  b.items.forEach(i => { i.nombre = (i.nombre || '').trim(); i.cant = Number(i.cant) || 1; i.precio = Number(i.precio) || 0; });
+  if(b.entrega !== 'envio') b.dir = b.dir || '';
+  if(b.estado === 'entregado' && !b.tsEntrega) b.tsEntrega = Date.now();
+
+  const pagos = b.pagos;
+  const enc = clone(b); delete enc.pagos;
+  const concepto = 'Encargo #' + enc.num + ' · ' + enc.cliente;
+  const antes = pagosDe(enc.id);
+  antes.filter(m => !pagos.find(p => p.id === m.id)).forEach(m => delDoc('movs', m.id, true));
+  const clave = m => [m.monto, m.metodo, m.fecha, m.cat, m.concepto].join('|');
+  pagos.forEach(p => {
+    p.concepto = concepto;
+    const old = antes.find(m => m.id === p.id);
+    if(!old || clave(old) !== clave(p)) putDoc('movs', p, true);
+  });
+  putDoc('encargos', enc);
+  cerrarSheet(true);
+  toast('Encargo #' + enc.num + ' guardado');
+}
+
+/* ===================== ENTREGA / COBRO ===================== */
+
+function abrirCobro(id, entregar){
+  const e = DATA.encargos.find(x => x.id === id);
+  if(!e) return;
+  const c = cuentaEnc(e);
+  if(entregar && c.saldo <= 0){ marcarEntregado(e); return; }
+  abrirSheet((entregar ? 'Entregar' : 'Cobrar') + ' #' + e.num + ' · ' + e.cliente,
+    '<div class="space-y-4">' +
+      '<div class="text-center py-2">' +
+        '<p class="text-sm text-stone-400">' + (c.total > 0 ? 'Falta cobrar' : 'El precio no está definido') + '</p>' +
+        '<p class="text-4xl font-extrabold tabular text-mad-200 mt-1">' + money(c.saldo) + '</p>' +
+        (c.pagado ? '<p class="text-[12px] text-stone-500 mt-1">Ya pagó ' + money(c.pagado) + ' de ' + money(c.total) + '</p>' : '') +
+      '</div>' +
+      '<div><label class="lbl" for="cbMonto">Monto que paga ahora</label>' +
+        '<div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none">$</span>' +
+        '<input id="cbMonto" inputmode="numeric" class="fld pl-6 tabular text-lg font-bold" value="' + (c.saldo || '') + '"></div></div>' +
+      '<p class="lbl mb-0">¿Cómo pagó?</p>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+        Object.keys(METODOS).map(k => '<button type="button" data-cobro="' + e.id + '|' + k + '|' + (entregar ? 1 : 0) + '" class="py-3.5 rounded-xl bg-mad-500 text-nog-900 font-extrabold active:scale-95 transition hover:bg-mad-400">' + METODOS[k] + '</button>').join('') +
+      '</div>' +
+      (entregar ? '<button type="button" data-entregarsin="' + e.id + '" class="w-full py-2.5 rounded-xl border border-nog-600 text-stone-300 font-bold text-sm active:bg-nog-700 hover:bg-nog-700">Entregar sin cobrar (queda debiendo)</button>' : '') +
+    '</div>', true);
+}
+
+function marcarEntregado(e){
+  e.estado = 'entregado';
+  e.tsEntrega = Date.now();
+  putDoc('encargos', e);
+  toast('Encargo #' + e.num + ' entregado');
+}
+
+function registrarCobro(id, metodo, entregar){
+  const e = DATA.encargos.find(x => x.id === id);
+  if(!e) return;
+  const monto = soloNum($('#cbMonto').value);
+  if(!monto){ toast('Poné cuánto pagó'); return; }
+  const c = cuentaEnc(e);
+  putDoc('movs', { id:uid(), tipo:'entrada', monto:monto, metodo:metodo, fecha:hoyISO(), ts:Date.now(),
+                   cat:categoriaPago(c.total, c.pagado, monto), encargoId:e.id,
+                   concepto:'Encargo #' + e.num + ' · ' + e.cliente }, true);
+  cerrarSheet(true);
+  if(entregar){ marcarEntregado(e); toast('Entregado · cobraste ' + money(monto)); }
+  else { render(); toast('Cobrado ' + money(monto)); }
+}
+
+/* ===================== MOVIMIENTO DE CAJA ===================== */
+
+function abrirMov(id, tipo){
+  const m = id ? DATA.movs.find(x => x.id === id) : null;
+  if(m && m.encargoId && DATA.encargos.find(e => e.id === m.encargoId)){ abrirEncargo(m.encargoId); return; }
+  UI.mov = m ? clone(m) : { id:uid(), tipo:tipo || 'salida', monto:0, metodo:'', cat:'', concepto:'', fecha:hoyISO(), ts:Date.now() };
+  abrirSheet(m ? (m.tipo === 'entrada' ? 'Editar entrada' : 'Editar gasto') : (UI.mov.tipo === 'entrada' ? 'Nueva entrada' : 'Nuevo gasto'), formMovHTML(!!m), true);
+  pintarMov();
+  if(!m) setTimeout(() => { const i = $('#mvMonto'); if(i) i.focus(); }, 260);
+}
+
+function formMovHTML(edicion){
+  const m = UI.mov;
+  const conceptos = Array.from(new Set(DATA.movs.filter(x => !x.encargoId && x.concepto).map(x => x.concepto)));
+  return '<div class="space-y-4">' +
+    '<div id="mvTipo" class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-nog-700 border border-nog-600"></div>' +
+    '<div><label class="lbl" for="mvMonto">Monto</label>' +
+      '<div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none">$</span>' +
+      '<input id="mvMonto" inputmode="numeric" class="fld pl-6 tabular text-lg font-bold" value="' + (m.monto || '') + '"></div></div>' +
+    '<div><label class="lbl" for="mvConcepto">Concepto</label>' +
+      '<input id="mvConcepto" list="dlConceptos" class="fld" placeholder="Ej. 2 kits de resina, troncos de eucalipto…" value="' + esc(m.concepto) + '"></div>' +
+    '<div><label class="lbl">Rubro</label><div id="mvCat" class="flex flex-wrap gap-1.5"></div></div>' +
+    '<div><label class="lbl">Cómo se pagó</label><div id="mvMetodo" class="grid grid-cols-2 gap-2"></div></div>' +
+    '<div><label class="lbl" for="mvFecha">Fecha</label><input id="mvFecha" type="date" class="fld" value="' + esc(m.fecha) + '"></div>' +
+    '<button type="button" id="btnGuardarMov" class="w-full py-3.5 rounded-xl bg-mad-500 text-nog-900 font-extrabold active:scale-[.98] transition hover:bg-mad-400">Guardar</button>' +
+    (edicion ? '<button type="button" id="btnBorrarMov" class="w-full py-2.5 rounded-xl border border-bad/40 text-bad font-bold text-sm active:bg-bad/10">Borrar</button>' : '') +
+    '<datalist id="dlConceptos">' + conceptos.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist>' +
+  '</div>';
+}
+
+function pintarMov(){
+  const m = UI.mov;
+  $('#mvTipo').innerHTML = [['entrada','Entrada'],['salida','Gasto']].map(t =>
+    '<button type="button" data-mvtipo="' + t[0] + '" class="py-2 rounded-lg text-sm font-bold ' + (m.tipo === t[0] ? (t[0] === 'entrada' ? 'bg-ok text-nog-900' : 'bg-bad text-nog-900') : 'text-stone-300') + '">' + t[1] + '</button>').join('');
+  $('#mvCat').innerHTML = chips(m.tipo === 'entrada' ? CAT_ENTRADA : CAT_SALIDA, m.cat, 'mvcat');
+  $('#mvMetodo').innerHTML = Object.keys(METODOS).map(k =>
+    '<button type="button" data-mvmetodo="' + k + '" class="py-2.5 rounded-xl border text-sm font-bold ' + (m.metodo === k ? 'bg-mad-500 border-mad-500 text-nog-900' : 'border-nog-600 text-stone-300') + '">' + METODOS[k] + '</button>').join('');
+}
+
+function guardarMov(){
+  const m = UI.mov;
+  m.monto = soloNum($('#mvMonto').value);
+  m.concepto = $('#mvConcepto').value.trim();
+  m.fecha = $('#mvFecha').value || hoyISO();
+  if(!m.monto) return toast('Poné el monto');
+  if(!m.cat) return toast('Elegí el rubro');
+  if(!m.metodo) return toast('Elegí si fue en efectivo o transferencia');
+  if(!m.concepto) m.concepto = m.cat;
+  putDoc('movs', m);
+  UI.mes = m.fecha.slice(0, 7);
+  cerrarSheet(true);
+  render();
+  toast(m.tipo === 'entrada' ? 'Entrada guardada' : 'Gasto guardado');
+}
+
+/* ===================== PRODUCTO ===================== */
+
+function abrirProducto(id){
+  const p = id ? DATA.productos.find(x => x.id === id) : null;
+  abrirSheet(p ? 'Editar producto' : 'Nuevo producto',
+    '<div class="space-y-4">' +
+      '<div><label class="lbl" for="prNombre">Nombre</label><input id="prNombre" class="fld" placeholder="Ej. Mesa ratona 90×50" value="' + esc(p ? p.nombre : '') + '"></div>' +
+      '<div><label class="lbl" for="prPrecio">Precio</label>' +
+        '<div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none">$</span>' +
+        '<input id="prPrecio" inputmode="numeric" class="fld pl-6 tabular" placeholder="0" value="' + (p && p.precio ? p.precio : '') + '"></div></div>' +
+      '<div><label class="lbl" for="prDesc">Descripción (opcional)</label><textarea id="prDesc" rows="2" class="fld" placeholder="Medida, madera, qué incluye…">' + esc(p ? p.desc : '') + '</textarea></div>' +
+      '<label class="flex items-center gap-3 text-sm"><input id="prActivo" type="checkbox" class="w-5 h-5 accent-[#D08A45]"' + (!p || p.activo !== false ? ' checked' : '') + '> Mostrar al cargar encargos</label>' +
+      '<button type="button" id="prGuardar" data-prid="' + (p ? p.id : '') + '" class="w-full py-3.5 rounded-xl bg-mad-500 text-nog-900 font-extrabold active:scale-[.98] transition hover:bg-mad-400">Guardar</button>' +
+      (p ? '<button type="button" data-delprod="' + p.id + '" class="w-full py-2.5 rounded-xl border border-bad/40 text-bad font-bold text-sm active:bg-bad/10">Borrar producto</button>' : '') +
+    '</div>', true);
+  if(!p) setTimeout(() => { const i = $('#prNombre'); if(i) i.focus(); }, 260);
+}
+
+function guardarProducto(id){
+  const nombre = $('#prNombre').value.trim();
+  if(!nombre) return toast('Poné el nombre');
+  const p = id ? clone(DATA.productos.find(x => x.id === id)) : { id:uid(), orden:DATA.productos.length };
+  p.nombre = nombre;
+  p.precio = soloNum($('#prPrecio').value);
+  p.desc = $('#prDesc').value.trim();
+  p.activo = $('#prActivo').checked;
+  putDoc('productos', p);
+  cerrarSheet(true);
+  toast('Producto guardado');
+}
+
+/* ========================= AJUSTES ========================= */
+
+function abrirAjustes(){
+  const conectado = CLOUD.on;
+  abrirSheet('Ajustes',
+    '<div class="space-y-5">' +
+      '<div>' +
+        '<div class="flex items-center justify-between mb-1">' +
+          '<label class="lbl mb-0">Sincronizar entre celulares</label>' +
+          '<span class="text-[11px] font-bold ' + (conectado ? 'text-ok' : 'text-stone-500') + '">' + (conectado ? 'Conectado' : 'Sin conectar') + '</span>' +
+        '</div>' +
+        '<p class="text-[11px] text-stone-400 mb-2.5 leading-snug">Pegá la configuración de Firebase y usá el mismo código de negocio en todos los dispositivos. Sin esto la app funciona igual, pero cada celular ve solo lo que se cargó en él.</p>' +
+        (CLOUD.error
+          ? '<div class="mb-3 rounded-xl border border-bad/40 bg-bad/10 p-3">' +
+              '<p class="text-xs font-bold text-bad mb-1">Qué está fallando</p>' +
+              '<p class="text-[11px] text-stone-200 leading-snug">' + esc(CLOUD.error.msg) + '</p>' +
+              '<p class="text-[10px] text-stone-500 mt-1.5 font-mono">' + esc(CLOUD.error.donde) + ' · ' + esc(CLOUD.error.code) + '</p>' +
+              (CFG.negocioId ? "<p class=\"text-[10px] text-stone-400 mt-2 leading-snug\">En las reglas de Firestore tiene que decir exactamente:<br><span class=\"font-mono text-mad-300 break-all\">negocio == '" + esc(CFG.negocioId) + "'</span></p>" : '') +
+            '</div>'
+          : '') +
+        '<label class="lbl" for="cfNegocio">Código del negocio</label>' +
+        '<input id="cfNegocio" class="fld mb-2.5" placeholder="nerva-algo-largo-y-secreto" value="' + esc(CFG.negocioId || '') + '">' +
+        '<label class="lbl" for="cfFb">Configuración de Firebase <span class="normal-case tracking-normal text-stone-500">(o el link de invitación)</span></label>' +
+        '<textarea id="cfFb" class="fld font-mono text-[11px]" rows="6" placeholder="Pegá el link que te pasaron, o el bloque de Firebase">' + esc(CFG.fb ? JSON.stringify(CFG.fb) : '') + '</textarea>' +
+        '<div class="flex gap-2 mt-2.5">' +
+          '<button type="button" id="cfConectar" class="flex-1 py-2.5 rounded-xl bg-mad-500 text-nog-900 font-extrabold text-sm active:scale-95 transition">' + (conectado ? 'Reconectar' : 'Conectar') + '</button>' +
+          (conectado ? '<button type="button" id="cfDesconectar" class="px-4 py-2.5 rounded-xl border border-nog-600 font-bold text-sm active:bg-nog-700">Desconectar</button>' : '') +
+        '</div>' +
+        (conectado ? '<button type="button" id="cfCompartir" class="w-full mt-2 py-2.5 rounded-xl border border-mad-500/50 text-mad-300 font-bold text-sm active:bg-mad-500/10 hover:bg-mad-500/10">📲 Conectar otro celular</button>' : '') +
+      '</div>' +
+
+      '<div class="border-t border-nog-700 pt-4">' +
+        '<label class="lbl">Copia de seguridad</label>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<button type="button" id="cfExportar" class="py-2.5 rounded-xl border border-nog-600 font-bold text-sm active:bg-nog-700">Exportar datos</button>' +
+          '<button type="button" id="cfImportar" class="py-2.5 rounded-xl border border-nog-600 font-bold text-sm active:bg-nog-700">Importar datos</button>' +
+        '</div>' +
+        '<input type="file" id="cfFile" accept="application/json" class="hidden">' +
+      '</div>' +
+
+      '<div class="border-t border-nog-700 pt-4">' +
+        '<label class="lbl">Zona de riesgo</label>' +
+        '<button type="button" id="cfBorrarTodo" class="w-full py-2.5 rounded-xl border border-bad/40 text-bad font-bold text-sm active:bg-bad/10">Borrar todos los encargos y la caja</button>' +
+      '</div>' +
+
+      '<div class="text-center pt-2"><img src="emblema.png" alt="" class="w-12 h-12 rounded-full mx-auto opacity-80"><p class="font-mano text-xl text-stone-500 mt-1">Nerva · Más que madera...</p><p class="text-[11px] text-stone-600">Madera &amp; Resina · Ciudad del Plata</p></div>' +
+    '</div>', true);
+}
+
+/* Acepta la configuración pegada tal cual la da Firebase: el bloque entero con
+   los import, el objeto JS con las claves sin comillas, o JSON limpio. */
+function parseConfigFirebase(txt){
+  txt = String(txt || '').trim();
+  if(!txt) return null;
+  const k = txt.indexOf('firebaseConfig');
+  const desde = txt.indexOf('{', k >= 0 ? k : 0);
+  if(desde < 0) return null;
+  const hasta = txt.indexOf('}', desde);
+  if(hasta < 0) return null;
+  const cuerpo = txt.slice(desde + 1, hasta);
+  const out = {};
+  const re = /["']?([A-Za-z_$][A-Za-z0-9_$]*)["']?\s*:\s*["']([^"']*)["']/g;
+  let m;
+  while((m = re.exec(cuerpo))) out[m[1]] = m[2];
+  return (out.apiKey && out.projectId) ? out : null;
+}
+
+function exportarDatos(){
+  const blob = new Blob([JSON.stringify({ v:1, app:'nerva', fecha:new Date().toISOString(), DATA:DATA }, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nerva-' + hoyISO() + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function importarDatos(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const j = JSON.parse(fr.result);
+      if(!j.DATA) throw new Error('formato');
+      COLS.forEach(c => (j.DATA[c] || []).forEach(o => putDoc(c, o, true)));
+      cerrarSheet(true); render(); toast('Datos importados');
+    } catch(e){ toast('El archivo no es válido'); }
+  };
+  fr.readAsText(file);
+}
+
+/* ==================== SINCRONIZACIÓN (Firebase) ==================== */
+
+const FB_VER = 'https://www.gstatic.com/firebasejs/10.12.2/';
+
+/* Un cartel que solo dice "Error" no ayuda a nadie: se guarda el motivo real que
+   devuelve Firestore y se traduce a algo accionable, que se lee en Ajustes. */
+const MOTIVOS_FB = {
+  'permission-denied': 'Firestore está rechazando la conexión. Casi siempre es que el código del negocio no coincide con el de las reglas, o que las reglas no se publicaron.',
+  'unauthenticated':   'Firestore pide autenticación: revisá que las reglas sean las que corresponden a este código de negocio.',
+  'not-found':         'No existe la base de datos. Creala en Firestore Database (ID (default)).',
+  'failed-precondition':'Falta crear la base de datos en Firestore Database.',
+  'unavailable':       'No hay conexión con Firestore. Puede ser internet o el servicio caído: reintenta solo.',
+  'invalid-argument':  'Algún dato de la configuración de Firebase está mal.',
+  'resource-exhausted':'Se pasaron de la cuota gratis del día. Se restablece sola.'
+};
+
+function anotarErrorCloud(e, donde){
+  const code = (e && e.code) ? String(e.code).replace('firestore/', '') : '';
+  CLOUD.error = {
+    code: code || (e && e.message ? e.message.slice(0, 120) : 'desconocido'),
+    msg: MOTIVOS_FB[code] || (e && e.message ? e.message : 'Error desconocido.'),
+    donde: donde
+  };
+  console.warn('[sync]', donde, e);
+  pintarSync('err', 'Error');
+}
+
+function pintarSync(estado, txt){
+  if(estado !== 'err') CLOUD.error = null;
+  const colores = { off:'bg-stone-500', on:'bg-ok', wait:'bg-warn animate-pulse', err:'bg-bad' };
+  $('#syncDot').className = 'w-2 h-2 rounded-full ' + (colores[estado] || colores.off);
+  $('#syncTxt').textContent = txt;
+}
+
+async function conectarCloud(silencioso){
+  if(!CFG.fb || !CFG.negocioId){ pintarSync('off', 'Local'); return false; }
+  pintarSync('wait', 'Conectando');
+  try {
+    const appMod = await import(FB_VER + 'firebase-app.js');
+    const fs = await import(FB_VER + 'firebase-firestore.js');
+    desconectarCloud(true);
+    const app = appMod.getApps && appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(CFG.fb);
+    CLOUD.db = fs.getFirestore(app);
+    CLOUD.fns = fs;
+    CLOUD.on = true;
+
+    /* Al conectar un dispositivo que ya venía cargando solo, lo suyo no está en la
+       nube y la suscripción lo pisaría. Se revisa antes y se pregunta. */
+    if(!silencioso){
+      const soloLocales = async col => {
+        const snap = await fs.getDocs(fs.collection(CLOUD.db, 'negocios', CFG.negocioId, col));
+        if(snap.empty) return { vacia:true, solos:[] };
+        const enNube = {};
+        snap.docs.forEach(d => enNube[d.id] = true);
+        return { vacia:false, solos:DATA[col].filter(x => !enNube[x.id]) };
+      };
+      const res = {};
+      for(const col of COLS) res[col] = await soloLocales(col);
+      const n = res.encargos.solos.length + res.movs.solos.length;
+      if(COLS.some(c => !res[c].vacia) && n){
+        if(confirm('Este celular tiene ' + n + ' registros (encargos o movimientos de caja) que no están en la cuenta compartida.\n\n' +
+                   'Aceptar: se suben y los ven todos.\n' +
+                   'Cancelar: se descartan y queda lo que ya hay en la cuenta.')){
+          COLS.forEach(c => res[c].solos.forEach(o => cloudPut(c, o)));
+        }
+      }
+    }
+
+    CLOUD.arrancada = {};
+    COLS.forEach(col => {
+      const ref = fs.collection(CLOUD.db, 'negocios', CFG.negocioId, col);
+      const unsub = fs.onSnapshot(ref, snap => aplicarSnapshot(col, snap.docs.map(d => d.data())),
+                                  err => anotarErrorCloud(err, 'leyendo ' + col));
+      CLOUD.unsubs.push(unsub);
+    });
+
+    pintarSync('on', 'En línea');
+    CFG.sincronizadoCon = CFG.negocioId;   /* de acá en adelante, la nube manda */
+    saveLocal('config');
+    if(!silencioso) toast('Sincronización activada');
+    return true;
+  } catch(e){
+    CLOUD.on = false;
+    anotarErrorCloud(e, 'conectando');
+    if(!silencioso) toast('No se pudo conectar. Mirá el detalle en Ajustes.');
+    return false;
+  }
+}
+
+/* Configurar cada celular a mano se presta a errores de tipeo, así que la
+   configuración viaja en un link. Quien lo abre queda conectado a la misma cuenta.
+   El link lleva la llave del negocio: se manda solo a los del taller. */
+function linkDeConfig(){
+  const datos = btoa(unescape(encodeURIComponent(JSON.stringify({ fb:CFG.fb, n:CFG.negocioId }))));
+  return location.origin + location.pathname + '#s=' + datos;
+}
+
+function aplicarConfigDeLink(){
+  const h = location.hash || '';
+  if(h.indexOf('#s=') !== 0) return false;
+  try { history.replaceState(null, '', location.pathname + location.search); }
+  catch(e){ location.hash = ''; }
+  try {
+    const d = JSON.parse(decodeURIComponent(escape(atob(h.slice(3)))));
+    if(!d || !d.fb || !d.n) return false;
+    if(CFG.negocioId === d.n && CFG.fb) return false;
+    if(!confirm('¿Conectar este celular a Nerva?\n\nVas a ver los mismos encargos y la misma caja que el resto.')) return false;
+    CFG.fb = d.fb;
+    CFG.negocioId = d.n;
+    saveLocal('config');
+    return true;
+  } catch(e){ return false; }
+}
+
+/* En iPhone, la app agregada a la pantalla de inicio guarda sus datos aparte de
+   Safari: abre vacía y sin configurar. Llevando la config en el start_url, el
+   acceso directo se configura solo la primera vez que se abre. */
+let LINK_MANIFIESTO = null;
+function actualizarManifiesto(){
+  const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
+  const arranque = (CFG.fb && CFG.negocioId) ? linkDeConfig() : base;
+  const manifest = {
+    name:'Nerva · Encargos', short_name:'Nerva', start_url:arranque, display:'standalone',
+    background_color:'#16110d', theme_color:'#16110d',
+    icons:[{ src:base + 'icono.png', sizes:'512x512', type:'image/png', purpose:'any' }]
+  };
+  if(LINK_MANIFIESTO){ URL.revokeObjectURL(LINK_MANIFIESTO.href); LINK_MANIFIESTO.remove(); }
+  LINK_MANIFIESTO = document.createElement('link');
+  LINK_MANIFIESTO.rel = 'manifest';
+  LINK_MANIFIESTO.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type:'application/json' }));
+  document.head.appendChild(LINK_MANIFIESTO);
+}
+
+function parseLinkConfig(txt){
+  const m = String(txt || '').match(/#s=([A-Za-z0-9+/=]+)/);
+  if(!m) return null;
+  try {
+    const d = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+    return (d && d.fb && d.n) ? d : null;
+  } catch(e){ return null; }
+}
+
+function desconectarCloud(interno){
+  CLOUD.unsubs.forEach(u => { try { u(); } catch(e){} });
+  CLOUD.unsubs = [];
+  CLOUD.arrancada = {};
+  if(!interno){
+    CLOUD.on = false; CLOUD.db = null; CLOUD.fns = null;
+    pintarSync('off', 'Local');
+  }
+}
+
+/* La subida de lo local solo tiene sentido la primera vez que este dispositivo se
+   sincroniza con este negocio y encuentra la colección vacía. Si se hiciera en cada
+   aviso, borrar el último registro lo resucitaría: los demás dispositivos verían la
+   colección vacía y volverían a subir lo que todavía tienen en memoria. */
+function aplicarSnapshot(col, docs){
+  const primero = !CLOUD.arrancada[col];
+  CLOUD.arrancada[col] = true;
+  if(primero && !docs.length && DATA[col].length && CFG.sincronizadoCon !== CFG.negocioId){
+    DATA[col].forEach(o => cloudPut(col, o));
+    return 'subido';
+  }
+  DATA[col] = docs;
+  saveLocal(col);
+  render();
+  return 'aplicado';
+}
+
+function cloudPut(col, obj){
+  if(!CLOUD.on) return;
+  const fs = CLOUD.fns;
+  fs.setDoc(fs.doc(CLOUD.db, 'negocios', CFG.negocioId, col, obj.id), JSON.parse(JSON.stringify(obj)))
+    .catch(e => anotarErrorCloud(e, 'guardando en ' + col));
+}
+
+function cloudDel(col, id){
+  if(!CLOUD.on) return;
+  const fs = CLOUD.fns;
+  fs.deleteDoc(fs.doc(CLOUD.db, 'negocios', CFG.negocioId, col, id))
+    .catch(e => anotarErrorCloud(e, 'borrando en ' + col));
+}
+
+/* ========================== EVENTOS ========================== */
+
+function nuevoSegunTab(){
+  if(UI.tab === 'caja') abrirMov(null, 'salida');
+  else if(UI.tab === 'productos') abrirProducto();
+  else abrirEncargo();
+}
+
+document.addEventListener('click', ev => {
+  const t = ev.target;
+  const cl = sel => t.closest(sel);
+
+  if(cl('a[href]')) return;   /* los links (WhatsApp) siguen solos */
+
+  const tab = cl('[data-goto]');
+  if(tab){ UI.tab = tab.dataset.goto; render(); window.scrollTo(0,0); return; }
+
+  if(cl('#fab') || cl('#btnNuevoTop')){ nuevoSegunTab(); return; }
+  if(cl('#btnAjustes') || cl('#btnSync')){ abrirAjustes(); return; }
+  if(cl('#sheetClose') || t.id === 'overlay'){ cerrarSheet(); return; }
+
+  if(cl('#btnDeshacer')){
+    const fn = DESHACER;
+    DESHACER = null;
+    $('#toast').classList.add('hidden');
+    if(fn) fn();
+    return;
+  }
+
+  /* ---- lista de encargos ---- */
+  const filtro = cl('[data-filtro]');
+  if(filtro){ UI.filtro = filtro.dataset.filtro; render(); return; }
+
+  const avanzar = cl('[data-avanzar]');
+  if(avanzar){
+    const e = DATA.encargos.find(x => x.id === avanzar.dataset.avanzar);
+    if(!e) return;
+    const sig = (ESTADOS[e.estado] || {}).next;
+    if(sig === 'entregado'){ abrirCobro(e.id, true); return; }
+    if(!sig) return;
+    e.estado = sig;
+    putDoc('encargos', e);
+    toast('#' + e.num + ' · ' + ESTADOS[sig].txt + (sig === 'listo' && e.tel ? '. Avisale al cliente' : ''));
+    return;
+  }
+
+  const cobrar = cl('[data-cobrar]');
+  if(cobrar){ abrirCobro(cobrar.dataset.cobrar, false); return; }
+
+  const cobro = cl('[data-cobro]');
+  if(cobro){ const p = cobro.dataset.cobro.split('|'); registrarCobro(p[0], p[1], p[2] === '1'); return; }
+
+  const sinCobrar = cl('[data-entregarsin]');
+  if(sinCobrar){
+    const e = DATA.encargos.find(x => x.id === sinCobrar.dataset.entregarsin);
+    if(e){ cerrarSheet(true); marcarEntregado(e); }
+    return;
+  }
+
+  const card = cl('[data-enc]');
+  if(card){ abrirEncargo(card.dataset.enc); return; }
+
+  /* ---- editor de encargo ---- */
+  const b = UI.borrador;
+  if(b){
+    const addProd = cl('[data-addprod]');
+    if(addProd){ addPieza(DATA.productos.find(p => p.id === addProd.dataset.addprod)); return; }
+    if(cl('#btnAddPieza')){ addPieza(); return; }
+
+    const delIt = cl('[data-delit]');
+    if(delIt){ b.items.splice(Number(delIt.dataset.delit), 1); pintarItems(); pintarCuenta(); return; }
+
+    const cant = cl('[data-cant]');
+    if(cant){
+      const p = cant.dataset.cant.split('|');
+      const it = b.items[Number(p[0])];
+      if(it){ it.cant = Math.max(1, (Number(it.cant) || 1) + Number(p[1])); pintarItems(); pintarCuenta(); }
+      return;
+    }
+
+    const res = cl('[data-resina]');
+    if(res){
+      const p = res.dataset.resina.split('|');
+      const it = b.items[Number(p[0])];
+      if(!it) return;
+      if(p[1] === '__otra'){
+        const v = prompt('¿Qué color de resina?', it.resina && RESINAS.indexOf(it.resina) < 0 ? it.resina : '');
+        if(v === null) return;
+        it.resina = v.trim();
+      } else it.resina = it.resina === p[1] ? '' : p[1];
+      pintarItems();
+      return;
+    }
+
+    const modo = cl('[data-modo]');
+    if(modo){ b.entrega = modo.dataset.modo; pintarBorrador(); return; }
+
+    const est = cl('[data-est]');
+    if(est){ b.estado = est.dataset.est; pintarBorrador(); return; }
+
+    const pgm = cl('[data-pgmonto]');
+    if(pgm){ UI.pg.monto = pgm.dataset.pgmonto; pintarCuenta(); return; }
+
+    const pgmet = cl('[data-pgmetodo]');
+    if(pgmet){ UI.pg.metodo = pgmet.dataset.pgmetodo; pintarCuenta(); return; }
+
+    if(cl('#btnAddPago')){ if(agregarPagoBorrador()) toast('Pago agregado. Acordate de guardar'); return; }
+
+    const delPago = cl('[data-delpago]');
+    if(delPago){ b.pagos = b.pagos.filter(p => p.id !== delPago.dataset.delpago); pintarCuenta(); return; }
+
+    if(cl('#btnGuardarEnc')){ guardarEncargo(); return; }
+
+    if(cl('#btnComprobante')){
+      const txt = textoComprobante(b, b.pagos);
+      if(b.tel) window.open(linkWa(b.tel, txt), 'whatsapp');
+      else compartir(txt);
+      return;
+    }
+
+    if(cl('#btnBorrarEnc')){
+      const enc = DATA.encargos.find(x => x.id === b.id);
+      if(!enc) return;
+      const pagos = pagosDe(enc.id);
+      const cobrado = pagos.reduce((s,m) => s + m.monto, 0);
+      if(!confirm('¿Borrar el encargo #' + enc.num + ' de ' + enc.cliente + '?' +
+                  (pagos.length ? '\n\nTambién se borran sus pagos de la caja (' + money(cobrado) + ').' : ''))) return;
+      pagos.forEach(m => delDoc('movs', m.id, true));
+      delDoc('encargos', enc.id);
+      cerrarSheet(true);
+      toastDeshacer('Encargo #' + enc.num + ' borrado', () => {
+        pagos.forEach(m => putDoc('movs', m, true));
+        putDoc('encargos', enc);
+        toast('Encargo #' + enc.num + ' recuperado');
+      });
+      return;
+    }
+  }
+
+  /* ---- caja ---- */
+  const nm = cl('[data-nuevomov]');
+  if(nm){ abrirMov(null, nm.dataset.nuevomov); return; }
+  const mv = cl('[data-mov]');
+  if(mv){ abrirMov(mv.dataset.mov); return; }
+
+  if(UI.mov && $('#mvTipo')){
+    const tp = cl('[data-mvtipo]');
+    if(tp){ UI.mov.tipo = tp.dataset.mvtipo; UI.mov.cat = ''; pintarMov(); $('#sheetTitle').textContent = UI.mov.tipo === 'entrada' ? 'Nueva entrada' : 'Nuevo gasto'; return; }
+    const ct = cl('[data-mvcat]');
+    if(ct){ UI.mov.cat = ct.dataset.mvcat; pintarMov(); return; }
+    const mt = cl('[data-mvmetodo]');
+    if(mt){ UI.mov.metodo = mt.dataset.mvmetodo; pintarMov(); return; }
+    if(cl('#btnGuardarMov')){ guardarMov(); return; }
+    if(cl('#btnBorrarMov')){
+      const m = DATA.movs.find(x => x.id === UI.mov.id);
+      if(!m) return;
+      delDoc('movs', m.id);
+      cerrarSheet(true);
+      toastDeshacer((m.tipo === 'entrada' ? 'Entrada' : 'Gasto') + ' de ' + money(m.monto) + ' borrado', () => { putDoc('movs', m); toast('Recuperado'); });
+      return;
+    }
+  }
+
+  if(cl('#btnCompartirMes')){ compartir(textoResumenMes(UI.mes)); return; }
+
+  /* ---- productos ---- */
+  if(cl('#btnNuevoProd')){ abrirProducto(); return; }
+  const prod = cl('[data-prod]');
+  if(prod){ abrirProducto(prod.dataset.prod); return; }
+  const gp = cl('#prGuardar');
+  if(gp){ guardarProducto(gp.dataset.prid); return; }
+  const dp = cl('[data-delprod]');
+  if(dp){
+    const p = DATA.productos.find(x => x.id === dp.dataset.delprod);
+    if(p && confirm('¿Borrar "' + p.nombre + '"? Los encargos ya cargados no cambian.')){
+      delDoc('productos', p.id); cerrarSheet(true);
+      toastDeshacer('Producto borrado', () => putDoc('productos', p));
+    }
+    return;
+  }
+
+  /* ---- ajustes ---- */
+  if(cl('#cfConectar')){
+    const desdeLink = parseLinkConfig($('#cfFb').value);
+    if(desdeLink){
+      CFG.fb = desdeLink.fb;
+      CFG.negocioId = desdeLink.n;
+    } else {
+      CFG.negocioId = $('#cfNegocio').value.trim();
+      const fb = parseConfigFirebase($('#cfFb').value);
+      if(!fb) return toast('No encontré la config de Firebase en ese texto');
+      CFG.fb = fb;
+      if(!CFG.negocioId) return toast('Poné un código de negocio');
+    }
+    saveLocal('config');
+    actualizarManifiesto();
+    conectarCloud().then(ok => { if(ok) cerrarSheet(true); });
+    return;
+  }
+  if(cl('#cfDesconectar')){ desconectarCloud(); cerrarSheet(true); toast('Sincronización desactivada'); return; }
+
+  if(cl('#cfCompartir')){
+    const url = linkDeConfig();
+    abrirSheet('Conectar otro celular',
+      '<div class="space-y-4">' +
+        '<p class="text-sm text-stone-300 leading-snug">Mandale este link al celular o la compu que quieras sumar. Al abrirlo queda conectado a los mismos encargos y la misma caja, sin configurar nada.</p>' +
+        '<div class="rounded-xl border border-nog-600 bg-nog-700 p-3 break-all font-mono text-[11px] text-stone-300">' + esc(url) + '</div>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<button type="button" id="cpCopiar" class="py-3 rounded-xl bg-mad-500 text-nog-900 font-extrabold text-sm active:scale-95 transition">Copiar link</button>' +
+          '<a href="https://wa.me/?text=' + encodeURIComponent('Link para conectar la app de Nerva:\n' + url) + '" target="whatsapp" rel="noopener" class="py-3 rounded-xl border border-nog-600 font-bold text-sm text-center active:bg-nog-700 hover:bg-nog-700">Enviar por WhatsApp</a>' +
+        '</div>' +
+        '<p class="text-[11px] text-stone-500 leading-snug">Este link es la llave de la caja: mandalo solo a los del taller y no lo publiques en ningún lado.</p>' +
+      '</div>', true);
+    return;
+  }
+  if(cl('#cpCopiar')){
+    const url = linkDeConfig();
+    if(navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link copiado'), () => toast('No se pudo copiar'));
+    else toast('Copialo a mano del recuadro');
+    return;
+  }
+  if(cl('#cfExportar')){ exportarDatos(); return; }
+  if(cl('#cfImportar')){ $('#cfFile').click(); return; }
+  if(cl('#cfBorrarTodo')){
+    if(confirm('¿Borrar TODOS los encargos y todos los movimientos de caja? No se puede deshacer.\n\nLos productos quedan.')){
+      DATA.encargos.slice().forEach(e => delDoc('encargos', e.id, true));
+      DATA.movs.slice().forEach(m => delDoc('movs', m.id, true));
+      cerrarSheet(true); render(); toast('Listo, quedó todo limpio');
+    }
+    return;
+  }
+});
+
+/* Lo que se escribe en el editor va directo al borrador, sin repintar los campos
+   (repintar mientras se escribe hace perder el foco en el celular). */
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  const b = UI.borrador;
+  if(t.id === 'q'){ UI.q = t.value; renderListaEnc(); return; }
+  if(!b) return;
+  if(t.dataset.b){
+    b[t.dataset.b] = t.value;
+    if(t.dataset.b === 'cliente'){
+      const c = clientesConocidos().find(x => x.cliente.toLowerCase() === t.value.trim().toLowerCase());
+      if(c && !b.tel && c.tel){ b.tel = c.tel; $('#enTel').value = c.tel; }
+    }
+    return;
+  }
+  if(t.dataset.it){
+    const p = t.dataset.it.split('|');
+    const it = b.items[Number(p[0])];
+    if(!it) return;
+    if(p[1] === 'precio'){ it.precio = soloNum(t.value); pintarCuenta(); return; }
+    it[p[1]] = t.value;
+    /* Al elegir un producto conocido, se sugiere su precio si no había uno. */
+    if(p[1] === 'nombre' && !it.precio){
+      const prod = DATA.productos.find(x => x.nombre.toLowerCase() === t.value.trim().toLowerCase());
+      if(prod && prod.precio){
+        it.precio = prod.precio;
+        const ip = $('[data-it="' + p[0] + '|precio"]');
+        if(ip) ip.value = prod.precio;
+        pintarCuenta();
+      }
+    }
+    return;
+  }
+  if(t.dataset.pg && UI.pg){
+    UI.pg[t.dataset.pg] = t.value;
+    if(t.dataset.pg === 'monto'){
+      /* actualiza solo el título ("Registrar seña/saldo") sin perder el foco */
+      const c = cuentaEnc(b, b.pagos);
+      const lbl = $('#pgTitulo');
+      if(lbl) lbl.textContent = 'Registrar ' + (soloNum(t.value) ? categoriaPago(c.total, c.pagado, soloNum(t.value)).toLowerCase() : (c.pagado > 0 ? 'otro pago' : 'seña'));
+      $$('[data-pgmonto]').forEach(x => x.classList.toggle('on', Number(x.dataset.pgmonto) === soloNum(t.value)));
+    }
+  }
+});
+
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if(UI.borrador && t.dataset && t.dataset.b){ UI.borrador[t.dataset.b] = t.value; return; }
+  if(UI.pg && t.dataset && t.dataset.pg === 'fecha'){ UI.pg.fecha = t.value; return; }
+  if(ev.target.id === 'selMes'){ UI.mes = ev.target.value; renderCaja(); }
+  if(ev.target.id === 'cfFile' && ev.target.files[0]) importarDatos(ev.target.files[0]);
+});
+
+/* ============================ INIT ============================ */
+
+(function init(){
+  loadLocal();
+  window.addEventListener('hashchange', () => {
+    if(aplicarConfigDeLink()){ render(); actualizarManifiesto(); conectarCloud(); }
+  });
+  const vinoDeLink = aplicarConfigDeLink();
+  actualizarManifiesto();
+  render();
+  if(CFG.fb && CFG.negocioId) conectarCloud(!vinoDeLink); else pintarSync('off', 'Local');
+})();
+</script>
+</body>
+</html>
